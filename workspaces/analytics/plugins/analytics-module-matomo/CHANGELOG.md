@@ -1,5 +1,57 @@
 ### Dependencies
 
+## 1.19.0
+
+### Minor Changes
+
+- 2258b1a: Backstage version bump to v1.43.2
+
+### Patch Changes
+
+- eac91f6: Added support for Backstage's New Frontend System.
+
+  If you're migrating to the new frontend system, you no longer need to wire up an API implementation in `apis.ts`. Instead, pass the module in to the `createApp()` function:
+
+  ```tsx
+  import matomoModule from '@backstage-community/plugin-analytics-module-matomo/alpha';
+
+  const app = createApp({
+    features: [matomoModule],
+  });
+  ```
+
+  This can be skipped if you have feature discovery enabled.
+
+## 1.18.1
+
+### Patch Changes
+
+- 4819a06: Updated dependency `@testing-library/jest-dom` to `6.8.0`.
+
+## 1.18.0
+
+### Minor Changes
+
+- 3d6351f: Backstage version bump to v1.42.4
+
+## 1.17.1
+
+### Patch Changes
+
+- 4523634: Updated dependency `@testing-library/jest-dom` to `6.7.0`.
+
+## 1.17.0
+
+### Minor Changes
+
+- b5a8ecf: Added `sendPlainUserId` config, which controls whether hashing of userId should be disabled.
+- 70f97c5: Backstage version bump to v1.40.2
+
+### Patch Changes
+
+- 0775db8: remove devDependency on '@redhat-developer/red-hat-developer-hub-theme'
+- 6877ddc: Updated dependency `@testing-library/jest-dom` to `6.6.4`.
+
 ## 1.16.0
 
 ### Minor Changes

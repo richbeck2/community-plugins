@@ -32,8 +32,10 @@ body:
         - azure-storage-explorer
         - badges
         - bazaar
+        - bitbucket-pull-requests
         - bitrise
         - blackduck
+        - bookmarks
         - cicd-statistics
         - cloudbuild
         - code-climate
@@ -84,7 +86,6 @@ body:
         - npm
         - ocm
         - octopus-deploy
-        - odo
         - opencost
         - periskop
         - pingidentity
@@ -102,6 +103,7 @@ body:
         - scaffolder-backend-module-sonarqube
         - scaffolder-relation-processor
         - sentry
+        - servicenow
         - shortcuts
         - sonarqube
         - splunk

@@ -22,8 +22,10 @@ attributes:
     - azure-storage-explorer
     - badges
     - bazaar
+    - bitbucket-pull-requests
     - bitrise
     - blackduck
+    - bookmarks
     - cicd-statistics
     - cloudbuild
     - code-climate
@@ -74,7 +76,6 @@ attributes:
     - npm
     - ocm
     - octopus-deploy
-    - odo
     - opencost
     - periskop
     - pingidentity
@@ -92,6 +93,7 @@ attributes:
     - scaffolder-backend-module-sonarqube
     - scaffolder-relation-processor
     - sentry
+    - servicenow
     - shortcuts
     - sonarqube
     - splunk

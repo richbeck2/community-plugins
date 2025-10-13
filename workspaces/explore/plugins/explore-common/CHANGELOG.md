@@ -1,5 +1,27 @@
 # @backstage-community/plugin-explore-common
 
+## 0.8.0
+
+### Minor Changes
+
+- 0264565: Backstage version bump to v1.43.2
+
+## 0.7.0
+
+### Minor Changes
+
+- deb9523: Backstage version bump to v1.42.3
+
+### Patch Changes
+
+- 02546ad: Internall update to use the yarn plugin for version management
+
+## 0.6.0
+
+### Minor Changes
+
+- e656f1d: Backstage version bump to v1.41.1
+
 ## 0.5.0
 
 ### Minor Changes

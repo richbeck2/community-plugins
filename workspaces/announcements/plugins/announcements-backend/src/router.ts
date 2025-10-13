@@ -25,9 +25,6 @@ import {
   BasicPermission,
 } from '@backstage/plugin-permission-common';
 import {
-  announcementCreatePermission,
-  announcementDeletePermission,
-  announcementUpdatePermission,
   announcementEntityPermissions,
   EVENTS_TOPIC_ANNOUNCEMENTS,
   EVENTS_ACTION_CREATE_ANNOUNCEMENT,
@@ -39,9 +36,9 @@ import {
   EVENTS_ACTION_DELETE_TAG,
   MAX_TITLE_TAG_LENGTH,
 } from '@backstage-community/plugin-announcements-common';
-import { createPermissionIntegrationRouter } from '@backstage/plugin-permission-node';
 import { signalAnnouncement } from './service/signal';
 import { AnnouncementsContext } from './service';
+import { sendAnnouncementNotification } from './service/announcementNotification';
 
 interface AnnouncementRequest {
   publisher: string;
@@ -51,6 +48,8 @@ interface AnnouncementRequest {
   body: string;
   active: boolean;
   start_at: string;
+  until_date?: string;
+  sendNotification: boolean;
   on_behalf_of?: string;
   tags?: string[];
 }
@@ -63,27 +62,32 @@ type GetAnnouncementsQueryParams = {
   category?: string;
   page?: number;
   max?: number;
-  active?: boolean;
-  sortby?: 'created_at' | 'start_at';
+  active?: string;
+  sortby?: 'created_at' | 'start_at' | 'updated_at';
   order?: 'asc' | 'desc';
+  current?: boolean;
+  tags?: string[];
 };
 
 export async function createRouter(
   context: AnnouncementsContext,
 ): Promise<express.Router> {
   const {
+    config,
+    events,
+    httpAuth,
+    logger,
     persistenceContext,
     permissions,
-    httpAuth,
-    config,
-    logger,
-    events,
     signals,
+    notifications,
   } = context;
 
-  const permissionIntegrationRouter = createPermissionIntegrationRouter({
-    permissions: Object.values(announcementEntityPermissions),
-  });
+  const {
+    announcementCreatePermission,
+    announcementDeletePermission,
+    announcementUpdatePermission,
+  } = announcementEntityPermissions;
 
   const isRequestAuthorized = async (
     req: Request,
@@ -102,11 +106,13 @@ export async function createRouter(
 
   const router = Router();
   router.use(express.json());
-  router.use(permissionIntegrationRouter);
 
   router.get(
     '/announcements',
-    async (req: Request<{}, {}, {}, GetAnnouncementsQueryParams>, res) => {
+    async (
+      req: Request<{}, {}, {}, GetAnnouncementsQueryParams & { tags?: string }>,
+      res,
+    ) => {
       const {
         query: {
           category,
@@ -115,19 +121,25 @@ export async function createRouter(
           active,
           sortby = 'created_at',
           order = 'desc',
+          current,
+          tags,
         },
       } = req;
+
+      const tagsFilter = tags ? tags.split(',') : undefined;
 
       const results = await persistenceContext.announcementsStore.announcements(
         {
           category,
           max,
           offset: page ? (page - 1) * (max ?? 10) : undefined,
-          active,
-          sortBy: ['created_at', 'start_at'].includes(sortby)
+          active: active === 'true',
+          sortBy: ['created_at', 'start_at', 'updated_at'].includes(sortby)
             ? sortby
             : 'created_at',
           order: ['asc', 'desc'].includes(order) ? order : 'desc',
+          current,
+          tags: tagsFilter,
         },
       );
 
@@ -177,7 +189,6 @@ export async function createRouter(
           metadata: { action: EVENTS_ACTION_DELETE_ANNOUNCEMENT },
         });
       }
-
       return res.status(204).end();
     },
   );
@@ -187,6 +198,17 @@ export async function createRouter(
     async (req: Request<{}, {}, AnnouncementRequest, {}>, res) => {
       if (!(await isRequestAuthorized(req, announcementCreatePermission))) {
         throw new NotAllowedError('Unauthorized');
+      }
+
+      const startAt = DateTime.fromISO(req.body.start_at);
+      const untilDate = req.body.until_date
+        ? DateTime.fromISO(req.body.until_date)
+        : undefined;
+
+      if (untilDate && untilDate < startAt) {
+        return res
+          .status(400)
+          .json({ error: 'until_date cannot be before start_at' });
       }
 
       // Normalize tags by slugifying each tag value
@@ -200,7 +222,9 @@ export async function createRouter(
           ...req.body,
           id: uuid(),
           created_at: DateTime.now(),
+          updated_at: DateTime.now(),
           start_at: DateTime.fromISO(req.body.start_at),
+          until_date: untilDate,
           tags: validatedTags,
         });
 
@@ -213,7 +237,14 @@ export async function createRouter(
           metadata: { action: EVENTS_ACTION_CREATE_ANNOUNCEMENT },
         });
 
-        await signalAnnouncement(announcement, signals);
+        if (announcement.active) {
+          await signalAnnouncement(announcement, signals);
+          const announcementNotificationsEnabled =
+            req.body?.sendNotification === true;
+          if (announcementNotificationsEnabled) {
+            await sendAnnouncementNotification(announcement, notifications);
+          }
+        }
       }
 
       return res.status(201).json(announcement);
@@ -237,10 +268,17 @@ export async function createRouter(
           category,
           active,
           start_at,
+          until_date,
           on_behalf_of,
           tags,
         },
       } = req;
+
+      if (until_date && until_date < start_at) {
+        return res
+          .status(400)
+          .json({ error: 'until_date cannot be before start_at' });
+      }
 
       const initialAnnouncement =
         await persistenceContext.announcementsStore.announcementByID(id);
@@ -264,7 +302,9 @@ export async function createRouter(
             publisher,
             category,
             active,
+            updated_at: DateTime.now(),
             start_at: DateTime.fromISO(start_at),
+            until_date: until_date ? DateTime.fromISO(until_date) : undefined,
             on_behalf_of,
             tags: validatedTags,
           },
@@ -276,6 +316,15 @@ export async function createRouter(
           eventPayload: { announcement },
           metadata: { action: EVENTS_ACTION_UPDATE_ANNOUNCEMENT },
         });
+      }
+
+      if (!initialAnnouncement.active && active) {
+        await signalAnnouncement(announcement, signals);
+        const announcementNotificationsEnabled =
+          req.body?.sendNotification === true;
+        if (announcementNotificationsEnabled) {
+          await sendAnnouncementNotification(announcement, notifications);
+        }
       }
 
       return res.status(200).json(announcement);

@@ -222,7 +222,7 @@ Example of the conditional policies file:
 ```yaml
 ---
 result: CONDITIONAL
-roleEntityRef: 'role:default/test'
+roleEntityRef: role:default/test
 pluginId: catalog
 resourceType: catalog-entity
 permissionMapping:
@@ -233,11 +233,11 @@ conditions:
   resourceType: catalog-entity
   params:
     claims:
-      - 'group:default/team-a'
-      - 'group:default/team-b'
+      - group:default/team-a
+      - group:default/team-b
 ---
 result: CONDITIONAL
-roleEntityRef: 'role:default/test'
+roleEntityRef: role:default/test
 pluginId: catalog
 resourceType: catalog-entity
 permissionMapping:
@@ -247,7 +247,7 @@ conditions:
   resourceType: catalog-entity
   params:
     claims:
-      - 'group:default/team-a'
+      - group:default/team-a
 ```
 
 Information about condition policies format you can find in the doc: [Conditional policies documentation](./docs/conditions.md). There is only one difference: yaml format compare to json. But yaml and json are back convertiable.
@@ -279,3 +279,17 @@ More information about group hierarchy can be found in the doc: [Group hierarchy
 ### Optional RBAC provider module support
 
 We also include the ability to create and load in RBAC backend plugin modules that can be used to make connections to third part access management tools. For more information, consult the [RBAC Providers documentation](./docs/providers.md).
+
+### Optional configuration to control policy decision precedence
+
+Controls the evaluation order between permission policies (basic) and conditional policies for resource permissions.
+
+- Default: `conditional` (conditional policies take precedence when present)
+- Set to `basic` to evaluate basic permission policy first
+
+```YAML
+permission:
+  enabled: true
+  rbac:
+    policyDecisionPrecedence: basic # or conditional
+```

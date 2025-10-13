@@ -1,5 +1,23 @@
 # @backstage-community/plugin-microsoft-calendar
 
+## 0.11.0
+
+### Minor Changes
+
+- 6765e27: Backstage version bump to v1.43.2
+
+## 0.10.0
+
+### Minor Changes
+
+- 271e567: Backstage version bump to v1.42.4
+
+## 0.9.0
+
+### Minor Changes
+
+- f91913f: Backstage version bump to v1.41.1
+
 ## 0.8.0
 
 ### Minor Changes

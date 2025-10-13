@@ -1,5 +1,44 @@
 # @backstage-community/plugin-announcements-common
 
+## 0.11.0
+
+### Minor Changes
+
+- d34e875: Added updated_at field, extended sorting capabilities NewAnnouncementsBanner
+
+## 0.10.0
+
+### Minor Changes
+
+- 2d1724c: Backstage version bump to v1.43.2
+
+## 0.9.1
+
+### Patch Changes
+
+- 2007a96: Fixed #5322 that caused `500` errors when fetching existing announcements with null `until_date`.
+
+## 0.9.0
+
+### Minor Changes
+
+- 4a3e603: Added support for an `until_date` field in announcements and introduced a new `current` filter.
+- 4a89fd8: With these changes, notifications can be enabled whenever new announcement is created. Announcement notifications are disabled by-default. For details, about notification, please refer [`Notifications`](https://backstage.io/docs/notifications/) docs.
+
+  announcements: integration with notifications #4378
+
+## 0.8.0
+
+### Minor Changes
+
+- e121abb: Backstage version bump to v1.42.3
+
+## 0.7.0
+
+### Minor Changes
+
+- 220cc20: Backstage version bump to v1.41.1
+
 ## 0.6.0
 
 ### Minor Changes

@@ -1,5 +1,30 @@
 # @backstage-community/plugin-manage-module-tech-insights
 
+## 0.3.0
+
+### Minor Changes
+
+- e40ad8c: Backstage version bump to v1.43.2
+
+### Patch Changes
+
+- Updated dependencies [e40ad8c]
+  - @backstage-community/plugin-manage-react@1.2.0
+
+## 0.2.2
+
+### Patch Changes
+
+- 7593e17: Fixed erroneous repository.url in package.json
+- Updated dependencies [7593e17]
+  - @backstage-community/plugin-manage-react@1.1.1
+
+## 0.2.1
+
+### Patch Changes
+
+- 3dbd259: Updated dependency `@backstage-community/plugin-tech-insights` to `^0.6.0`.
+
 ## 0.2.0
 
 ### Minor Changes
