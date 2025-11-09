@@ -1,0 +1,9 @@
+# Minimal config for the xkcd-comic workspace used by the backend standalone
+backend:
+  baseUrl: http://localhost:7007
+  listen:
+    port: 7007
+
+# Disable auth in the standalone dev backend to simplify local development
+auth:
+  environment: 'development'
