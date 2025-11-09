@@ -27,6 +27,7 @@ import {
   AuthenticationError,
   NotAllowedError,
 } from '@backstage/errors';
+import { xkcdServiceRef } from './services/XkcdService';
 
 // TEMPLATE NOTE:
 // Plugin tests are integration tests for your plugin, ensuring that all pieces
@@ -140,5 +141,46 @@ describe('plugin', () => {
     expect(getRes.body).toMatchObject({
       error: { name: 'NotAllowedError' },
     });
+  });
+
+  it('should return latest xkcd comic with base64 image', async () => {
+    const fakeComic = {
+      info: {
+        month: '11',
+        num: 3165,
+        link: '',
+        year: '2025',
+        news: '',
+        safe_title: 'Earthquake Prediction Flowchart',
+        transcript: '',
+        alt: "At least people who make religious predictions of the apocalypse have an answer to the question 'Why didn't you predict any of the other ones that happened recently?'",
+        img: 'https://imgs.xkcd.com/comics/earthquake_prediction_flowchart.png',
+        title: 'Earthquake Prediction Flowchart',
+        day: '7',
+      },
+      image: {
+        data: Buffer.from('PNGDATA').toString('base64'),
+        contentType: 'image/png',
+      },
+    };
+
+    const { server } = await startTestBackend({
+      features: [
+        xkcdComicPlugin,
+        catalogServiceMock.factory({
+          entities: [],
+        }),
+        createServiceFactory({
+          service: xkcdServiceRef,
+          deps: {},
+          factory: () => ({
+            fetchLatestComic: jest.fn().mockResolvedValue(fakeComic),
+          }),
+        }),
+      ],
+    });
+
+    const res = await request(server).get('/api/xkcd-comic/comic').expect(200);
+    expect(res.body).toEqual(fakeComic);
   });
 });

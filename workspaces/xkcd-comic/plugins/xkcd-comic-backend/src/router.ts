@@ -19,13 +19,16 @@ import { z } from 'zod';
 import express from 'express';
 import Router from 'express-promise-router';
 import { todoListServiceRef } from './services/TodoListService';
+import { xkcdServiceRef } from './services/XkcdService';
 
 export async function createRouter({
   httpAuth,
   todoList,
+  xkcd,
 }: {
   httpAuth: HttpAuthService;
   todoList: typeof todoListServiceRef.T;
+  xkcd: typeof xkcdServiceRef.T;
 }): Promise<express.Router> {
   const router = Router();
   router.use(express.json());
@@ -60,6 +63,12 @@ export async function createRouter({
 
   router.get('/todos/:id', async (req, res) => {
     res.json(await todoList.getTodo({ id: req.params.id }));
+  });
+
+  // Get latest xkcd comic (info + base64 image)
+  router.get('/comic', async (_req, res) => {
+    const comic = await xkcd.fetchLatestComic();
+    res.json(comic);
   });
 
   return router;

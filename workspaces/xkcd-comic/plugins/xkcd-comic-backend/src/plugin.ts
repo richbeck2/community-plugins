@@ -19,6 +19,7 @@ import {
 } from '@backstage/backend-plugin-api';
 import { createRouter } from './router';
 import { todoListServiceRef } from './services/TodoListService';
+import { xkcdServiceRef } from './services/XkcdService';
 
 /**
  * xkcdComicPlugin backend plugin
@@ -33,12 +34,14 @@ export const xkcdComicPlugin = createBackendPlugin({
         httpAuth: coreServices.httpAuth,
         httpRouter: coreServices.httpRouter,
         todoList: todoListServiceRef,
+        xkcd: xkcdServiceRef,
       },
-      async init({ httpAuth, httpRouter, todoList }) {
+      async init({ httpAuth, httpRouter, todoList, xkcd }) {
         httpRouter.use(
           await createRouter({
             httpAuth,
             todoList,
+            xkcd,
           }),
         );
       },
