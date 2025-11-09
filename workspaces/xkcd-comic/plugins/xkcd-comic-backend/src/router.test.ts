@@ -13,70 +13,86 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {
-  mockCredentials,
-  mockErrorHandler,
-  mockServices,
-} from '@backstage/backend-test-utils';
+import { mockErrorHandler, mockServices } from '@backstage/backend-test-utils';
 import express from 'express';
 import request from 'supertest';
 
 import { createRouter } from './router';
-import { todoListServiceRef } from './services/TodoListService';
 
-const mockTodoItem = {
-  title: 'Do the thing',
-  id: '123',
-  createdBy: mockCredentials.user().principal.userEntityRef,
-  createdAt: new Date().toISOString(),
-};
-
-// TEMPLATE NOTE:
-// Testing the router directly allows you to write a unit test that mocks the provided options.
-describe('createRouter', () => {
+describe('createRouter (xkcd)', () => {
   let app: express.Express;
-  let todoList: jest.Mocked<typeof todoListServiceRef.T>;
 
   beforeEach(async () => {
-    todoList = {
-      createTodo: jest.fn(),
-      listTodos: jest.fn(),
-      getTodo: jest.fn(),
+    // Mock xkcd service
+    const mockXkcd = {
+      fetchLatestComic: jest.fn(),
     };
+
     const router = await createRouter({
       httpAuth: mockServices.httpAuth(),
-      todoList,
+      xkcd: mockXkcd,
     });
+
     app = express();
     app.use(router);
     app.use(mockErrorHandler());
   });
 
-  it('should create a TODO', async () => {
-    todoList.createTodo.mockResolvedValue(mockTodoItem);
+  it('returns latest comic with base64 image', async () => {
+    const fakeComic = {
+      info: {
+        month: '11',
+        num: 3165,
+        link: '',
+        year: '2025',
+        news: '',
+        safe_title: 'Earthquake Prediction Flowchart',
+        transcript: '',
+        alt: 'Alt text',
+        img: 'https://imgs.xkcd.com/comics/earthquake_prediction_flowchart.png',
+        title: 'Earthquake Prediction Flowchart',
+        day: '7',
+      },
+      image: {
+        data: Buffer.from('PNGDATA').toString('base64'),
+        contentType: 'image/png',
+      },
+    };
 
-    const response = await request(app).post('/todos').send({
-      title: 'Do the thing',
+    // Replace router's xkcd service mock with one that returns fakeComic
+    // Note: createRouter captured mockXkcd from beforeEach; to set its behavior
+    // we need to reconstruct the router with a mock having behavior.
+    const mockXkcd = {
+      fetchLatestComic: jest.fn().mockResolvedValue(fakeComic),
+    };
+
+    const router = await createRouter({
+      httpAuth: mockServices.httpAuth(),
+      xkcd: mockXkcd,
     });
 
-    expect(response.status).toBe(201);
-    expect(response.body).toEqual(mockTodoItem);
+    const localApp = express();
+    localApp.use(router);
+    localApp.use(mockErrorHandler());
+
+    const res = await request(localApp).get('/comic').expect(200);
+    expect(res.body).toEqual(fakeComic);
   });
 
-  it('should not allow unauthenticated requests to create a TODO', async () => {
-    todoList.createTodo.mockResolvedValue(mockTodoItem);
+  it('returns 500 when xkcd service fails', async () => {
+    const mockXkcd = {
+      fetchLatestComic: jest.fn().mockRejectedValue(new Error('fail')),
+    };
 
-    // TEMPLATE NOTE:
-    // The HttpAuth mock service considers all requests to be authenticated as a
-    // mock user by default. In order to test other cases we need to explicitly
-    // pass an authorization header with mock credentials.
-    const response = await request(app)
-      .post('/todos')
-      .set('Authorization', mockCredentials.none.header())
-      .send({
-        title: 'Do the thing',
-      });
+    const router = await createRouter({
+      httpAuth: mockServices.httpAuth(),
+      xkcd: mockXkcd,
+    });
 
-    expect(response.status).toBe(401);
+    const localApp = express();
+    localApp.use(router);
+    localApp.use(mockErrorHandler());
+
+    await request(localApp).get('/comic').expect(500);
   });
 });
