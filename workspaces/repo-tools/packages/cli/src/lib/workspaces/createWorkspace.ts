@@ -15,7 +15,7 @@
  */
 import { join } from 'path';
 import { copy } from 'fs-extra';
-import { execSync } from 'child_process';
+import { spawnSync } from 'child_process';
 
 // TODO: might be worth shipping our our template for create-app, especially if we decide
 // to change the layout of the workspaces moving forward.
@@ -29,10 +29,34 @@ export const createWorkspace = async (opts: { name: string; cwd?: string }) => {
   // eslint-disable-next-line no-restricted-syntax
   const templatePath = join(__dirname, 'templates', 'workspace');
 
-  execSync(
-    `npx @backstage/create-app --path ${workspacePath} --skip-install --template-path=${templatePath}`,
-    { input: opts.name },
+  // Use spawnSync with a piped stdin so we don't rely on the parent process'
+  // readline/TTY state (inquirer may have closed it). We send the workspace
+  // name followed by a newline in case the create-app prompts for it.
+  const result = spawnSync(
+    'npx',
+    [
+      '@backstage/create-app',
+      '--path',
+      workspacePath,
+      '--skip-install',
+      `--template-path=${templatePath}`,
+    ],
+    {
+      input: `${opts.name}\n`,
+      stdio: ['pipe', 'inherit', 'inherit'],
+      encoding: 'utf-8',
+    },
   );
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  if (result.status && result.status !== 0) {
+    throw new Error(
+      `@backstage/create-app failed with exit code ${result.status}`,
+    );
+  }
 
   // experimental test
   // eslint-disable-next-line no-restricted-syntax
